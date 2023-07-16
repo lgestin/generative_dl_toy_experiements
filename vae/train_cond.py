@@ -57,6 +57,10 @@ def main(
         x, y = batch
         x, y = x.to(device), y.to(device)
 
+        # randomly drop some of the labels
+        mask = torch.rand_like(y.float()) > 0.7
+        y = y.masked_fill(mask, 10)
+
         x_vae, (mu_p, log_std_p), (mu_q, log_std_q) = model(x, y)
 
         # Train VAE
