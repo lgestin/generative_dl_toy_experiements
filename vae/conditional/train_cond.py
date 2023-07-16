@@ -57,7 +57,7 @@ def main(
         x, y = batch
         x, y = x.to(device), y.to(device)
 
-        x_vae, (mu_p, log_std_p), (mu_q, log_std_q) = vae(x, y)
+        x_vae, (mu_p, log_std_p), (mu_q, log_std_q) = model(x, y)
 
         # Train VAE
         loss_recons = (x - x_vae).pow(2).mean()
