@@ -83,7 +83,7 @@ def main(
             for k, v in metrics.items():
                 writer.add_scalar(f"train/{k}", v, global_step=step)
 
-            if step % 1000 == 1:
+            if step % 5000 == 1:
                 val_metrics = defaultdict(list)
                 vae.eval()
                 for batch in val_dataloader:

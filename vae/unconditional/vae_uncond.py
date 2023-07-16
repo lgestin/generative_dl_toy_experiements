@@ -12,15 +12,19 @@ class Encoder(nn.Module):
     def __init__(self, d_model):
         super().__init__()
         model = [
+            # 28 -> 28
             Conv2d(1, d_model, (1, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
-            Conv2d(d_model, d_model // 2, (4, 4), (2, 2), padding=2),
-            nn.LeakyReLU(0.2, inplace=True),
-            Conv2d(d_model // 2, d_model // 4, (4, 4), (2, 2), padding=2),
-            nn.LeakyReLU(0.2, inplace=True),
-            Conv2d(d_model // 4, d_model // 8, (2, 2), (2, 2)),
-            nn.LeakyReLU(0.2, inplace=True),
-            Conv2d(d_model // 8, 2 * (d_model // 8), (1, 1)),
+            nn.ReLU(inplace=True),
+            # 28 -> 14
+            Conv2d(d_model, d_model // 2, (5, 5), (2, 2), padding=2),
+            nn.ReLU(inplace=True),
+            # 14 -> 7
+            Conv2d(d_model // 2, d_model // 4, (5, 5), (2, 2), padding=2),
+            nn.ReLU(inplace=True),
+            # 7 -> 4
+            Conv2d(d_model // 4, d_model // 8, (4, 4)),
+            nn.ReLU(inplace=True),
+            Conv2d(d_model // 8, 2 * d_model // 8, (1, 1)),
         ]
         self.model = nn.Sequential(*model)
 
@@ -33,16 +37,20 @@ class Decoder(nn.Module):
         super().__init__()
         model = [
             Conv2d(d_model // 8, d_model // 8, (3, 3), padding=(1, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.ReLU(inplace=True),
+            # 4 -> 7
             nn.Upsample(scale_factor=2),
-            Conv2d(d_model // 8, d_model // 4, (5, 5), padding=(3, 3)),
-            nn.LeakyReLU(0.2, inplace=True),
+            Conv2d(d_model // 8, d_model // 4, (2, 2)),
+            nn.ReLU(inplace=True),
+            # 7 -> 14
             nn.Upsample(scale_factor=2),
-            Conv2d(d_model // 4, d_model // 2, (5, 5), padding=(3, 3)),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Upsample((28, 28)),
+            Conv2d(d_model // 4, d_model // 2, (5, 5), padding=2),
+            nn.ReLU(inplace=True),
+            # 14 -> 28
+            nn.Upsample(scale_factor=2),
             Conv2d(d_model // 2, d_model, (3, 3), padding=(1, 1)),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.ReLU(inplace=True),
+            # 28 -> 28
             Conv2d(d_model, 1, (1, 1)),
         ]
 
