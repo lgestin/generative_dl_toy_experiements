@@ -91,9 +91,9 @@ def main(
                 writer.add_images("train/imgs", x_gen[:16], global_step=step)
 
             # Save models
-            if step % 100000 == 0:
-                torch.save(gen, exp_path / f"gen_{step}.pt")
-                torch.save(dis, exp_path / f"dis_{step}.pt")
+            if step % 10000 == 0:
+                torch.save(gen.state_dict(), exp_path / f"gen_{step}.pt")
+                torch.save(dis.state_dict(), exp_path / f"dis_{step}.pt")
 
             if step > max_iter:
                 break

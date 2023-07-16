@@ -16,18 +16,23 @@ class Discriminator(nn.Module):
         self.z_cond = nn.Embedding(11, d_z)
 
         model = [
+            # 28 -> 28
             Conv2d(1, d_model, (1, 1)),
             CondBatchNorm2d(d_z, d_model),
             nn.ReLU(inplace=True),
-            Conv2d(d_model, d_model, (4, 4), (2, 2), padding=2),
-            CondBatchNorm2d(d_z, d_model),
+            # 28 -> 14
+            Conv2d(d_model, d_model // 2, (5, 5), (2, 2), padding=2),
+            CondBatchNorm2d(d_z, d_model // 2),
             nn.ReLU(inplace=True),
-            Conv2d(d_model, d_model, (4, 4), (2, 2), padding=2),
-            CondBatchNorm2d(d_z, d_model),
+            # 14 -> 7
+            Conv2d(d_model // 2, d_model // 4, (5, 5), (2, 2), padding=2),
+            CondBatchNorm2d(d_z, d_model // 4),
             nn.ReLU(inplace=True),
-            Conv2d(d_model, d_model, (4, 4), (2, 2), padding=2),
+            # 7 -> 4
+            Conv2d(d_model // 4, d_model // 8, (4, 4)),
+            CondBatchNorm2d(d_z, d_model // 8),
             nn.ReLU(inplace=True),
-            Conv2d(d_model, 1, (1, 1)),
+            Conv2d(d_model // 8, 1, (1, 1)),
         ]
         self.model = CondSequential(*model)
 

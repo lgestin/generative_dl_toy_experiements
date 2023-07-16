@@ -74,14 +74,14 @@ def main(
             writer.add_scalar("train/dis_r", loss_dis_r.mean(), global_step=step)
             writer.add_scalar("train/dis_f", loss_dis_f.mean(), global_step=step)
 
-            if step % 10000 == 1:
+            if step % 5000 == 1:
                 x_gen = (MNIST.unnormalize(x_gen) + 1) / 2
                 writer.add_images("train/imgs", x_gen[:16], global_step=step)
 
             # Save models
-            if step % 100000 == 1:
-                torch.save(gen, exp_path / f"gen_{step}.pt")
-                torch.save(dis, exp_path / f"dis_{step}.pt")
+            if step % 10000 == 1:
+                torch.save(gen.state_dict(), exp_path / f"gen_{step}.pt")
+                torch.save(dis.state_dict(), exp_path / f"dis_{step}.pt")
 
             if step > max_iter:
                 break

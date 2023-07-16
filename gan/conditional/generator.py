@@ -41,21 +41,25 @@ class Generator(nn.Module):
         self.z_cond = nn.Embedding(11, d_z)
 
         model = [
-            Conv2d(1, d_model, (3, 3), padding=(1, 1)),
-            CondBatchNorm2d(d_z, d_model),
-            nn.LeakyReLU(0.2, inplace=True),
+            Conv2d(1, d_model // 8, (3, 3), padding=(1, 1)),
+            CondBatchNorm2d(d_z, d_model // 8),
+            nn.ReLU(inplace=True),
+            # 4 -> 7
             nn.Upsample(scale_factor=2),
-            Conv2d(d_model, d_model, (5, 5), padding=(3, 3)),
-            CondBatchNorm2d(d_z, d_model),
-            nn.LeakyReLU(0.2, inplace=True),
+            Conv2d(d_model // 8, d_model // 4, (2, 2)),
+            CondBatchNorm2d(d_z, d_model // 4),
+            nn.ReLU(inplace=True),
+            # 7 -> 14
             nn.Upsample(scale_factor=2),
-            Conv2d(d_model, d_model, (5, 5), padding=(3, 3)),
+            Conv2d(d_model // 4, d_model // 2, (5, 5), padding=2),
+            CondBatchNorm2d(d_z, d_model // 2),
+            nn.ReLU(inplace=True),
+            # 14 -> 28
+            nn.Upsample(scale_factor=2),
+            Conv2d(d_model // 2, d_model, (3, 3), padding=(1, 1)),
             CondBatchNorm2d(d_z, d_model),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Upsample((28, 28)),
-            Conv2d(d_model, d_model, (3, 3), padding=(1, 1)),
-            CondBatchNorm2d(d_z, d_model),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.ReLU(inplace=True),
+            # 28 -> 28
             Conv2d(d_model, 1, (1, 1)),
         ]
 
