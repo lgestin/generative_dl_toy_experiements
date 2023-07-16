@@ -4,20 +4,18 @@ This repo implements various deep learning techniques. The model are trained to 
 
 ## 1. GANs 
 
-Generative Adversarial Networks is a generative modelling technique designed to generate synthetic data that resembles the training data. A well trained generator can generate high quality samples. GANs have produced state of the art results in a variety of tasks and domains (images, audio, video, ...).
+Generative Adversarial Networks are a generative modelling technique designed to generate synthetic data that resembles the training data. GANs have produced state of the art results in a variety of tasks and domains (images, audio, video, ...).
 GANs are composed of two networks (Generator and Discriminator) that are trained adversarially until an equilibrium is reached. 
 
 Pros:
-- **High Quality output**
+- **High Quality output**. GANs produce and have produced state of the art output for most type of data. A well trained GANs will produce sharp output and also very varied.
 - **No explicit density estimation**. Unlike some other generative modelling, GANs don't need explicit density estimation which, when dealing with high dimensional spaces, can be a significant advantage.
-- **Versatility**. Gans can be used in a lot of situations. It can be used to train most of the architectures, but more importantly it can be used in combination with other techniques. It is a way to compute perceptual features (via the discriminator's features) the can be used along with other approaches.
+- **Versatility**. Gans can be utilized in a lot of situations. It can be used to train most of the architectures, but more importantly it can be used in combination with other techniques. It is a way to compute perceptual features (via the discriminator's features) the can be used along with other approaches.
 - **Sharp Output**. Usually the output of GANs is sharper than other approaches du to the impact of the discriminator (feature matching, patch discriminators, ...)
 - **Variety in the generated output**. When properly trained, GANs can generate a greater variety of outputs, capturing a wide spectrum of the training data distribution. This contrasts with some other models that may suffer from overfitting to certain data modes.
-- **Unsupervised Learning** capability. Training a GAN doesn't require any label.
-- **Data augmentation**. Training a GAN on your data is a great way to augment your dataset
 
 Cons:
-- **Training instability**. GANs are usually hard to train. Finding the right balance between the discriminator and the generator can be a tedious task at training time. GANs can suffer from issues like mode collapse.
+- **Training instability**. GANs are often hard to train. Finding the right balance between the discriminator and the generator can be a tedious task at training time. GANs can suffer from issues like mode collapse.
 - **Lack of control over the output**. The only way to really control the output of a GAN is to train it with powerful conditioning, otherwise it can be hard to control.
 - There is no explicit way to estimate the latent variables for a given, real sample.
 
@@ -28,7 +26,7 @@ In this implementation we use:
 
 ## 2. VAEs
 
-Variational Auto Encoders is another generative modelling technique. Similarly to regular auto encoders, it is usually composed of an encoder and a decoder. 
+Variational Auto Encoders are another generative modelling technique. Similarly to regular auto encoders, it is often composed of an encoder and a decoder. 
 
 The Encoder's job is to map the input to a lower dimension space and the decoder has to reconstruct the data from that lower dim representation. 
 
@@ -42,15 +40,15 @@ Pros:
 - **Theoretical Grounding**: VAEs have a solid theoretical foundation based on the variational inference framework and Bayesian principles.
 
 Cons:
-- **Quality of sample**: Usually samples are less sharp and detailed. (Reconstruction loss in output domain alongside with gaussian prior usually causes this). However the reconstruction loss can be replaced / improved by using a Discriminator network and train the whole system as a GAN.
+- **Quality of sample**: Samples can be less sharp and detailed. (Reconstruction loss in output domain alongside with Gaussian prior are responsible for this). However the reconstruction loss can be replaced / improved by using a Discriminator network and train the whole system as a GAN.
 
 In this implementation we used
 - For the unconditional case: Prior $\mathcal{N}(0, I)$
-- For the conditional case: A gaussian conditional prior. Another network is trained to predict the parameters of the prior distribution, which the encoder is asked to match as best as it can via the KL term
+- For the conditional case: A Gaussian conditional prior. Another network is trained to predict the parameters of the prior distribution, which the encoder is asked to match as best as it can via the KL term
 
 ## 3. Diffusion models
 
-Diffusion models is another type of Generative models. They work in two phases. The *forward* process, which gradually corrupts training data with gaussian noise, and the *reverse process* which uses a neural network to predict what noise was added at a given step (equivalent to predicting the original data). In other words, a model is trained to gradually denoise input, which was manually gradually corrupted until it can be considered gaussian noise.
+Diffusion models are another type of Generative models. They work in two phases. The *forward* process, which gradually corrupts training data with Gaussian noise, and the *reverse process* which uses a neural network to predict what noise was added at a given step (equivalent to predicting the original data). In other words, a model is trained to gradually denoise input, which was manually gradually corrupted until it can be considered Gaussian noise.
 
 Pros:
 - **Training stability**: Diffusion models are also easy to train, they don't suffer from mode collapse.
@@ -58,6 +56,8 @@ Pros:
 
 Cons:
 - **Compute cost**: Because of the iterative nature of diffusion models, both training a sampling are expensive processes.
+- Lack of control over the output. The only way to really control the output of a diffusion model is to train it with powerful conditioning, otherwise it can be hard to control.
+- No real latent space, interpolation can be hard
 
 In this implementation we used:
 - Linear beta schedule.
