@@ -123,12 +123,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_path", type=Path, required=True)
-    parser.add_argument(
-        "--data_path", type=Path, default=Path("/home/lucas/.data/mnist")
-    )
+    parser.add_argument("--data_path", type=Path, default=Path.home() / "/.data/mnist")
     parser.add_argument("--d_model", type=int, default=64)
     parser.add_argument("--lr", type=float, default=3e-4)
-    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--max_iter", type=int, default=100000)
 
     options = parser.parse_args()
