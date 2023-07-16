@@ -109,7 +109,7 @@ def main(
                 torch.save(model.state_dict(), exp_path / f"dm_{step}.pt")
 
             if step > max_iter:
-                break
+                return
 
 
 if __name__ == "__main__":

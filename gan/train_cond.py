@@ -96,7 +96,7 @@ def main(
                 torch.save(dis.state_dict(), exp_path / f"dis_{step}.pt")
 
             if step > max_iter:
-                break
+                return
 
 
 if __name__ == "__main__":

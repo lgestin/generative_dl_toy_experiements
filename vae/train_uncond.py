@@ -112,7 +112,7 @@ def main(
                 torch.save(vae, exp_path / f"vae_{step}.pt")
 
             if step > max_iter:
-                break
+                return
 
 
 if __name__ == "__main__":
