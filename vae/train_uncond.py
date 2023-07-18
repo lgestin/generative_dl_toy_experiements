@@ -78,6 +78,7 @@ def main(
         }
         return metrics
 
+    torch.backends.cudnn.benchmark = True
     while 1:
         for batch in dataloader:
             step += 1

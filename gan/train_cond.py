@@ -43,6 +43,7 @@ def main(
     labels = " ".join([str(l) for l in y_test[:16].tolist()])
     writer.add_text("train/imgs_labels", labels)
 
+    torch.backends.cudnn.benchmark = True
     step = 0
     while 1:
         for x, y in dataloader:

@@ -38,6 +38,7 @@ def main(
     writer = SummaryWriter(exp_path)
     writer.add_image("test", (MNIST.unnormalize(dataset[0][0]) + 1) / 2, global_step=0)
 
+    torch.backends.cudnn.benchmark = True
     step = 0
     while 1:
         for x, _ in dataloader:
