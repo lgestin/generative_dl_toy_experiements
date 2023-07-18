@@ -74,7 +74,7 @@ def main(
         )
         loss_kl = loss_kl.mean()
 
-        loss = loss_recons + loss_kl
+        loss = loss_recons + 5 * loss_kl
 
         with torch.no_grad():
             # Compute kl p | N(0, 1)
@@ -94,6 +94,10 @@ def main(
             "kl": loss_kl,
             "klp": loss_klp,
             "klq": loss_klq,
+            "mu_p": mu_p.mean(),
+            "std_p": log_std_p.exp().mean(),
+            "std_q": log_std_q.exp().mean(),
+            "mu_q": mu_q.mean(),
         }
         return metrics
 
@@ -108,7 +112,7 @@ def main(
             for k, v in metrics.items():
                 writer.add_scalar(f"train/{k}", v, global_step=step)
 
-            if step % 1000 == 1:
+            if step % 5000 == 1:
                 val_metrics = defaultdict(list)
                 vae.eval()
                 for batch in val_dataloader:
@@ -132,7 +136,7 @@ def main(
 
             # Save models
             if step % 10000 == 1:
-                torch.save(vae, exp_path / f"vae_{step}.pt")
+                torch.save(vae.state_dict(), exp_path / f"vae_{step}.pt")
 
             if step > max_iter:
                 return
@@ -144,10 +148,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_path", type=Path, required=True)
     parser.add_argument("--data_path", type=Path, default=Path.home() / ".data/mnist")
-    parser.add_argument("--d_model", type=int, default=64)
+    parser.add_argument("--d_model", type=int, default=128)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--max_iter", type=int, default=100000)
+    parser.add_argument("--max_iter", type=int, default=200000)
 
     options = parser.parse_args()
 

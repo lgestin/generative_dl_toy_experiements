@@ -62,14 +62,20 @@ def main(
         loss_kl = -log_std + (log_std.exp().pow(2) + mu.pow(2) - 1) / 2
         loss_kl = loss_kl.mean()
 
-        loss = loss_recons + 0.5 * loss_kl
+        loss = loss_recons + 5 * loss_kl
 
         if model.training:
             opt.zero_grad()
             loss.backward()
             opt.step()
 
-        metrics = {"loss": loss, "recons": loss_recons, "kl": loss_kl}
+        metrics = {
+            "loss": loss,
+            "recons": loss_recons,
+            "kl": loss_kl,
+            "mu": mu.mean(),
+            "std": log_std.exp().mean(),
+        }
         return metrics
 
     while 1:
@@ -101,15 +107,14 @@ def main(
                 x_vae = (MNIST.unnormalize(x_vae) + 1) / 2
                 writer.add_images("val/rec", x_vae, global_step=step)
 
-                z = torch.randn(16, 8, 4, 4).to(device)
+                z = torch.randn(16, d_model // 8, 4, 4).to(device)
                 x_dec = vae.decode(z)
                 x_dec = (MNIST.unnormalize(x_dec) + 1) / 2
-                writer.add_images("val/z", z.view(16, 1, 8, 16), global_step=step)
                 writer.add_images("val/gen", x_dec, global_step=step)
 
             # Save models
             if step % 10000 == 1:
-                torch.save(vae, exp_path / f"vae_{step}.pt")
+                torch.save(vae.state_dict(), exp_path / f"vae_{step}.pt")
 
             if step > max_iter:
                 return
@@ -121,10 +126,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_path", type=Path, required=True)
     parser.add_argument("--data_path", type=Path, default=Path.home() / ".data/mnist")
-    parser.add_argument("--d_model", type=int, default=64)
+    parser.add_argument("--d_model", type=int, default=128)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--max_iter", type=int, default=100000)
+    parser.add_argument("--max_iter", type=int, default=200000)
 
     options = parser.parse_args()
 
