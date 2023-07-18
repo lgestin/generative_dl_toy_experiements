@@ -58,7 +58,7 @@ def main(
 
         t = torch.randint(0, T, (x.size(0),), device=device)
         x_t, z_t = model.forward_process(x, t)
-        z_pred_t = model.reverse_process(x_t, t)
+        z_pred_t = model.unet(x_t, t=t / model.T)
 
         # Train model
         loss = (z_t - z_pred_t).pow(2).mean()
@@ -71,6 +71,7 @@ def main(
         metrics = {"loss": loss}
         return metrics
 
+    torch.backends.cudnn.benchmark = True
     while 1:
         for batch in dataloader:
             step += 1
