@@ -116,6 +116,7 @@ class DiffusionModel(nn.Module):
         x_0_pred = self.unet(x_t, z_cond=z_cond, t=t / self.T)
         return x_0_pred
 
+    @torch.no_grad()
     def denoise(self, x_T, z_cond):
         x_t = x_T
         x_ts = []
