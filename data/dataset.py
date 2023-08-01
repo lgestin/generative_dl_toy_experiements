@@ -8,7 +8,7 @@ class MNIST(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         x, y = self.data[index]
-        x = torchvision.transforms.PILToTensor()(x)
+        x = torchvision.transforms.PILToTensor()(x).float()
         x = 2 * x / 255 - 1
         x = MNIST.normalize(x)
         return x, y
