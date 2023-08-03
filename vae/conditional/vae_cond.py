@@ -5,7 +5,7 @@ from vae.conditional.conditional_prior import ConditionalPrior
 class ConditionalVAE(VAE):
     def __init__(self, d_model):
         super().__init__(d_model)
-        self.prior = ConditionalPrior()
+        self.prior = ConditionalPrior(d_model)
 
     def forward(self, x, z_cond):
         mu_p, log_std_p = self.encoder(x)

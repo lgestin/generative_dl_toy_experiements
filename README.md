@@ -63,4 +63,4 @@ In this implementation we used:
 - Linear beta schedule.
 - Conditioning done with conditional batch normalization
 
-## 4. [WIP] RCNN
+## 4. [WIP] Normalizing Flows
