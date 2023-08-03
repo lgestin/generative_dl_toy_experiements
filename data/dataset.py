@@ -15,11 +15,11 @@ class MNIST(torch.utils.data.Dataset):
 
     @staticmethod
     def normalize(x):
-        return (x + 0.8) / 0.3
+        return (x + 0.7386789917945862) / 0.6162156462669373
 
     @staticmethod
     def unnormalize(x):
-        return x * 0.3 - 0.8
+        return x * 0.6162156462669373 - 0.7386789917945862
 
     def __len__(self):
         return len(self.data)
