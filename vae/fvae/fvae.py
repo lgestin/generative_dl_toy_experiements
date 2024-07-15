@@ -17,22 +17,26 @@ class AffineCouplingLayer(nn.Module):
         self.layers[-1].weight.data.zero_()
         self.layers[-1].bias.data.zero_()
 
+    def compute_mu_logs(self, x):
+        x = self.layers(x)
+        mu, log_std = x.chunk(2, dim=1)
+        log_std = 1.4 * log_std.tanh()
+        return mu, log_std
+
     def forward(self, x):
         x_0, x_1 = x.chunk(2, dim=1)
-        mu, log_std = self.layers(x_0).chunk(2, dim=1)
-        log_std = 3 * log_std.tanh()
-        x_1 = x_1 * log_std.exp() + mu
+        mu, log_std = self.compute_mu_logs(x_0)
+        x_1 = mu + x_1 * log_std.exp()
         x = torch.cat([x_0, x_1], dim=1)
-        log_det = log_std.sum(dim=[1, 2, 3])
+        log_det = log_std.mean(1).sum(dim=[1, 2])
         return x, log_det
 
     def inverse(self, x):
         x_0, x_1 = x.chunk(2, dim=1)
-        mu, log_std = self.layers(x_0).chunk(2, dim=1)
-        log_std = 3 * log_std.tanh()
-        x_1 = (x_1 - mu) * (-log_std).exp()
+        mu, log_std = self.compute_mu_logs(x_0)
+        x_1 = (x_1 - mu) * torch.exp(-log_std)
         x = torch.cat([x_0, x_1], dim=1)
-        log_det = -log_std.sum(dim=[1, 2, 3])
+        log_det = -log_std.mean(1).sum(dim=[1, 2])
         return x, log_det
 
 
@@ -58,6 +62,7 @@ class FVAE(ConditionalVAE):
         z_p, log_det = self.flow(z_q)
 
         mu_p, log_std_p = self.prior(z_cond)
+        log_std_p = 1.4 * torch.tanh(log_std_p)
 
         return (
             self.decoder(z_q),
@@ -66,11 +71,12 @@ class FVAE(ConditionalVAE):
             (z_p, mu_p, log_std_p),
         )
 
-    def sample(self, z_cond):
+    def sample(self, z_cond, scale=1.0):
         mu_p, log_std_p = self.prior(z_cond)
+        log_std_p = 1.4 * torch.tanh(log_std_p)
 
         z_p = self.sample_z(z_cond.size(0))
-        z_p = z_p * log_std_p.exp() + mu_p
+        z_p = z_p * log_std_p.exp() * scale + mu_p
 
         z_q, _ = self.flow.inverse(z_p)
 
