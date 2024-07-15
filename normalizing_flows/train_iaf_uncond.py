@@ -1,13 +1,15 @@
 import torch
 
+from tqdm import tqdm
 from pathlib import Path
 from collections import defaultdict
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, Subset
+from torch.amp.grad_scaler import GradScaler
 
 from data.dataset import MNIST
 
-from normalizing_flows.maf.maf import MAF
+from normalizing_flows.iaf.iaf import IAF
 
 
 def main(
@@ -22,7 +24,7 @@ def main(
 
     dataset = MNIST(data_path=data_path)
 
-    val_idx = list(range(1000))
+    val_idx = list(range(256))
     val_dataset = Subset(dataset, val_idx)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size)
 
@@ -35,10 +37,12 @@ def main(
         train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True
     )
 
-    maf = MAF(d_model=28 * 28, n_layers=5)
-    maf = maf.to(device)
+    iaf = IAF(dim=28 * 28, n_layers=4)
+    iaf = iaf.to(device)
+    # iaf = torch.compile(iaf)
 
-    opt = torch.optim.AdamW(maf.parameters(), lr=lr)
+    opt = torch.optim.AdamW(iaf.parameters(), lr=lr)
+    scaler = GradScaler()
 
     writer = SummaryWriter(exp_path)
     x_val = next(iter(val_dataloader))[0][:16]
@@ -54,40 +58,45 @@ def main(
         x, _ = batch
         x = x.view(x.size(0), 28 * 28).to(device)
 
-        z, log_det = model(x)
+        with torch.autocast(device_type=device, dtype=torch.float16):
+            z, log_det = model(x)
 
-        # Train MAF
-        nll = 0.5 * (x.size(1) * torch.tensor(2 * torch.pi).log() + z.pow(2).sum(dim=1))
-        loss = nll.mean() - log_det.mean()
+            # Train IAF
+            nll = 0.5 * (764 * torch.tensor(2 * torch.pi).log() + z.pow(2).sum(dim=1))
+            loss = 1 / 764 * (nll.mean() - log_det.mean())
 
         metrics = {"loss": loss, "nll": nll.mean(), "log_det": log_det.mean()}
         if model.training:
             opt.zero_grad()
-            loss.backward()
-            grad = torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
-            opt.step()
+            scaler.scale(loss).backward()
+            scaler.unscale_(opt)
+            grad = torch.nn.utils.clip_grad_norm_(model.parameters(), 1e1)
+            scaler.step(opt)
+            scaler.update()
 
             metrics["grad"] = grad
         return metrics
 
-    torch.backends.cudnn.benchmark = True
+    pbar = tqdm(desc="training", total=max_iter)
     while 1:
         for batch in dataloader:
-            step += 1
 
-            maf.train()
-            metrics = process_batch(batch, maf)
+            iaf.train()
+            metrics = process_batch(batch, iaf)
+
+            pbar.update(1)
+            step += 1
 
             # Monitor metrics
             for k, v in metrics.items():
                 writer.add_scalar(f"train/{k}", v, global_step=step)
 
-            if step % 1000 == 1:
+            if step % 10 == 1:
                 val_metrics = defaultdict(list)
-                maf.eval()
+                iaf.eval()
                 for batch in val_dataloader:
-                    with torch.no_grad():
-                        metrics = process_batch(batch, maf)
+                    with torch.inference_mode():
+                        metrics = process_batch(batch, iaf)
                     for k, v in metrics.items():
                         val_metrics[k] += [v]
 
@@ -98,15 +107,15 @@ def main(
 
                 z = torch.randn(16, 28 * 28).to(device)
                 with torch.no_grad():
-                    x_maf, _ = maf.inverse(z)
-                x_maf = (MNIST.unnormalize(x_maf) + 1) / 2
+                    x_iaf, _ = iaf.inverse(z)
+                x_iaf = (MNIST.unnormalize(x_iaf) + 1) / 2
                 writer.add_images(
-                    "val/gen", x_maf.view(16, 1, 28, 28), global_step=step
+                    "val/gen", x_iaf.view(16, 1, 28, 28), global_step=step
                 )
 
             # Save models
             if step % 10000 == 1:
-                torch.save(maf, exp_path / f"maf_{step}.pt")
+                torch.save(iaf, exp_path / f"iaf_{step}.pt")
 
             if step > max_iter:
                 return
@@ -119,11 +128,12 @@ if __name__ == "__main__":
     parser.add_argument("--exp_path", type=Path, required=True)
     parser.add_argument("--data_path", type=Path, default=Path.home() / ".data/mnist")
     parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--max_iter", type=int, default=100000)
 
     options = parser.parse_args()
 
+    # with torch.autograd.set_detect_anomaly(True):
     main(
         exp_path=options.exp_path,
         data_path=options.data_path,

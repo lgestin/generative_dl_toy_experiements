@@ -37,16 +37,11 @@ class RandPerm(nn.Module):
 
 
 class MaskedLinear(nn.Linear):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        in_features = kwargs.pop("in_features") if "in_features" in kwargs else args[0]
-        out_features = (
-            kwargs.pop("out_features") if "out_features" in kwargs else args[1]
-        )
+    def __init__(self, in_features, out_features, *args, **kwargs):
+        super().__init__(in_features, out_features, *args, **kwargs)
         mask = torch.ones(out_features, in_features).tril(-1).bool()
-        self.register_buffer("mask", ~mask)
+        self.register_buffer("mask", mask)
 
     def forward(self, x):
-        weight = self.weight.masked_fill(self.mask, 0)
+        weight = self.weight.masked_fill(~self.mask, 0)
         return F.linear(x, weight, bias=self.bias)
